@@ -1,0 +1,2 @@
+# qtXorShowgemini250101
+git_QtXorShowgemina250101
