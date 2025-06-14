@@ -27,18 +27,20 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     // 设置窗口大小
-    setFixedSize(800, 760);//700); // 调整窗口大小以容纳神经网络图形和按钮
+    setFixedSize(800, 990);//760);//700); // 调整窗口大小以容纳神经网络图形和按钮
 
     // 初始化神经网络
     initializeNetwork();
 
     // 准备 XOR 训练数据
-    trainInputs = {{0.0, 0.0}, {0.0, 1.0}, {1.0, 0.0}, {1.0, 1.0}};
+    trainInputs = {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}, {1.0, 1.0}};
     // 目标输出：XOR (第一个输出), 直通 X1 (第二个输出), 直通 X2 (第三个输出)
-    trainTargets = {{0.0, 0.0, 0.0}, {1.0, 0.0, 1.0}, {1.0, 1.0, 0.0}, {0.0, 1.0, 1.0}}; // 对应新的3个输出
+//    trainTargets = {{0.0, 0.0, 0.0}, {1.0, 0.0, 1.0}, {1.0, 1.0, 0.0}, {0.0, 1.0, 1.0}}; // 对应新的3个输出
+    // 改成2个输出, 把 y1 屏蔽!
+    trainTargets = {{0.0,  0.0}, {1.0,  0.0}, {1.0,  1.0}, {0.0,  1.0}}; // 对应新的3个输出
 
-    learningRate = 0.03;//0.31; // 学习率
-    epochs = 15000;//8000;       // 训练轮次
+    learningRate = 0.13;    //31; //3;//0.31; // 学习率
+    epochs = 17000;//15000; //5000;//7000;//15000;//8000;       // 训练轮次
     currentEpoch = 0;
     currentLoss = 0.0;
 
@@ -122,7 +124,7 @@ void MainWindow::initializeNetwork()
     // 隐藏层大小 (题目要求5个神经元)
     int numHidden = 5; // 修改为5个隐藏层神经元
     // 输出层大小 (XOR预测 + X1直通 + X2直通 = 3个输出)
-    int numOutputs = 3; // 修改为3个输出层神经元
+    int numOutputs = 2;//3; // 修改为3个输出层神经元
 
     // 初始化偏置为0
     hiddenBias.fill(0.0, numHidden);
@@ -290,6 +292,10 @@ void MainWindow::toggleHiddenNeuronTraining(int neuronIndex, bool freeze)
 {
     if (neuronIndex >= 0 && neuronIndex < hiddenNeuronFrozenStatus.size()) {
         hiddenNeuronFrozenStatus[neuronIndex] = freeze;
+        //下面把 这个 冻结的 权重(到输出的)权重 给 置0(试一下)……
+        weightsHiddenOutput[neuronIndex][0]=0;
+        weightsHiddenOutput[neuronIndex][1]=0;
+        //
         qDebug() << "隐藏层神经元 H" << neuronIndex + 1 << (freeze ? "已冻结" : "已解冻");
         // 更新按钮的显示状态 (可选，例如禁用已冻结的A按钮和已解冻的B按钮)
         // 可以在这里改变按钮颜色或文本，让用户知道当前状态
@@ -350,9 +356,14 @@ void MainWindow::printPredictionResults() {
     qDebug() << "\n--- 预测 (推理) 结果 ---";
     for (int i = 0; i < trainInputs.size(); ++i) {
         feedForward(trainInputs[i]); // 对每个训练样本进行前向传播以获取预测
+        //把 目标输出 x1给 屏蔽了 , y2 是直通 x2=> y2
         qDebug() << "输入:" << trainInputs[i][0] << "," << trainInputs[i][1]
-                 << " | 目标输出: XOR(" << trainTargets[i][0] << "), X1_Passthrough(" << trainTargets[i][1] << "), X2_Passthrough(" << trainTargets[i][2] << ")"
-                 << " | 预测输出: XOR(" << QString::number(outputLayer[0], 'f', 4) << "), X1_Passthrough(" << QString::number(outputLayer[1], 'f', 4) << "), X2_Passthrough(" << QString::number(outputLayer[2], 'f', 4) << ")";
+                 << " | 目标输出: XOR(" << trainTargets[i][0] << "), X2_Passthrough(" << trainTargets[i][1] << "), X2_Passthrough(" <<
+            //trainTargets[i][2]<<
+            ")"
+                 << " | 预测输出: XOR(" << QString::number(outputLayer[0], 'f', 4) << "), X2_Passthrough(" << QString::number(outputLayer[1], 'f', 4) << "), X2_Passthrough(" ;
+        qDebug() << QString::number(outputLayer[1], 'f', 4) << ")";
+//        qDebug() << QString::number(outputLayer[2], 'f', 4) << ")";
     }
 }
 
@@ -446,8 +457,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
     int neuronRadius = 30; // 神经元半径
 
     // --- 1. 绘制输入层神经元 ---
-    QPoint inputNeuron1Center(inputX, height / 3);
-    QPoint inputNeuron2Center(inputX, height * 2 / 3);
+    QPoint inputNeuron1Center(inputX, height / 3 - 100);
+    QPoint inputNeuron2Center(inputX, height * 2 / 3 +150);
 
     drawNeuron(painter, inputNeuron1Center, neuronRadius, "X1", QString::number(inputLayer[0], 'f', 2), Qt::yellow);
     drawNeuron(painter, inputNeuron2Center, neuronRadius, "X2", QString::number(inputLayer[1], 'f', 2), Qt::yellow);
@@ -467,13 +478,14 @@ void MainWindow::paintEvent(QPaintEvent *event)
     }
 
     // --- 3. 绘制输出层神经元 ---
-    QPoint outputNeuron1Center(outputX, height / 4); // XOR 预测
-    QPoint outputNeuron2Center(outputX, height / 2);  // X1 直通
-    QPoint outputNeuron3Center(outputX, height * 3 / 4);// X2 直通
+    QPoint outputNeuron1Center(outputX, (height / 4 ) - 60); // XOR 预测
+//    QPoint outputNeuron2Center(outputX, height / 2);  // X1 直通
+    QPoint outputNeuron3Center(outputX, (height * 3 / 4 ) +70);// X2 直通
 
     drawNeuron(painter, outputNeuron1Center, neuronRadius, "Y_XOR", QString::number(outputLayer[0], 'f', 2), Qt::green);
-    drawNeuron(painter, outputNeuron2Center, neuronRadius, "Y_X1", QString::number(outputLayer[1], 'f', 2), Qt::green);
-    drawNeuron(painter, outputNeuron3Center, neuronRadius, "Y_X2", QString::number(outputLayer[2], 'f', 2), Qt::green);
+//    drawNeuron(painter, outputNeuron2Center, neuronRadius, "Y_X1", QString::number(outputLayer[1], 'f', 2), Qt::green);
+    drawNeuron(painter, outputNeuron3Center, neuronRadius, "Y_X2", QString::number(outputLayer[1], 'f', 2), Qt::green);
+//    drawNeuron(painter, outputNeuron3Center, neuronRadius, "Y_X2", QString::number(outputLayer[2], 'f', 2), Qt::green);
 
 
     // --- 4. 绘制输入层到隐藏层的连接线和权重 ---
@@ -488,8 +500,9 @@ void MainWindow::paintEvent(QPaintEvent *event)
     // --- 5. 绘制隐藏层到输出层的连接线和权重 ---
     for (int i = 0; i < hiddenNeuronCenters.size(); ++i) { // 隐藏层神经元数量
         drawConnection(painter, hiddenNeuronCenters[i], outputNeuron1Center, weightsHiddenOutput[i][0], true); // 到Y_XOR
-        drawConnection(painter, hiddenNeuronCenters[i], outputNeuron2Center, weightsHiddenOutput[i][1], true); // 到Y_X1
-        drawConnection(painter, hiddenNeuronCenters[i], outputNeuron3Center, weightsHiddenOutput[i][2], true); // 到Y_X2
+//        drawConnection(painter, hiddenNeuronCenters[i], outputNeuron2Center, weightsHiddenOutput[i][1], true); // 到Y_X1
+        drawConnection(painter, hiddenNeuronCenters[i], outputNeuron3Center, weightsHiddenOutput[i][1], true); // 到Y_X2
+//        drawConnection(painter, hiddenNeuronCenters[i], outputNeuron3Center, weightsHiddenOutput[i][2], true); // 到Y_X2
     }
 
 
