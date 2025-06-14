@@ -1,2 +1,2 @@
-# qtXorShowgemini250101
-git_QtXorShowgemina250101
+# qtShowArtificialNeuralNetwork250101
+git_QtXorShowge_qtShowArtificialNeuralNetwork250101
