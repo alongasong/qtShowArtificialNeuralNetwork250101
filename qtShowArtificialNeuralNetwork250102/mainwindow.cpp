@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     // 设置窗口大小
-    setFixedSize(800, 700); // 调整窗口大小以容纳神经网络图形和按钮
+    setFixedSize(800, 760);//700); // 调整窗口大小以容纳神经网络图形和按钮
 
     // 初始化神经网络
     initializeNetwork();
@@ -37,8 +37,8 @@ MainWindow::MainWindow(QWidget *parent)
     // 目标输出：XOR (第一个输出), 直通 X1 (第二个输出), 直通 X2 (第三个输出)
     trainTargets = {{0.0, 0.0, 0.0}, {1.0, 0.0, 1.0}, {1.0, 1.0, 0.0}, {0.0, 1.0, 1.0}}; // 对应新的3个输出
 
-    learningRate = 0.31; // 学习率
-    epochs = 8000;       // 训练轮次
+    learningRate = 0.03;//0.31; // 学习率
+    epochs = 15000;//8000;       // 训练轮次
     currentEpoch = 0;
     currentLoss = 0.0;
 
